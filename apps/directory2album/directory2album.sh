@@ -1,19 +1,7 @@
 #!/bin/bash
 ### About
-# This shell script can create Nextcloud-Photo-Albums from your directory-organized photos/videos.
-# Default behavior:
-# Over all enabled users, take all first level directories inside /Photos, which are not hidden
-# for each of them:
-# 1. check if a file named .noimage, .noindex, .nomedia or .nomemories is in the directory, skip if this is the case
-# 2. Get the info about the last script-run or "0" as fallback
-# 3. Find multimedia files (images, videos) which are created or modified since last script-run and are not hidden and not in hidden subdirectories. Visible subdirectories will be processed too, even with an ignore-file!
-# If no multimedia file found, process next directory
-# 4. Before processing first file:
-# 4.1 process files:scan on directory to be sure all files are known to nextcloud
-# 4.2 photo album will be created, named by directory
-# 5. All multimedia files found in the directory will be added to this album.
-# 6. Timestamp when the directory was processed will be stored in user:setting directory2album "album_indexed_datetimes"
-#
+# Bash script for creating Nextcloud-Photo-Albums from your directory-organized photos or videos
+# Url: https://github.com/mide22/nc-directory2album/
 # Autor: Michael Deichen <https://github.com/mide22>
 # License: GPL v3
 
@@ -39,10 +27,9 @@ occ() {
 
 ### Installation
 # Copy this script into apps/directory2album directory in your nextcloud instance and make it executable.
-# Maybe the directory "apps" does not exist, so create it
 
 ### Usage
-# just run it every time you added multimedia files to your directories. May run in a cronjob.
+# Just run it every time you added multimedia files to your directories. May run in a cronjob.
 
 ### End of settings
 
@@ -61,7 +48,7 @@ read_album_indexed_datetimes() {
   local setting_value
   local album_list
   album_indexed_datetimes=()
-  setting_value=$(occ user:setting --default-value "" "${user_id}" directory2album "album_indexed_datetimes")
+  setting_value=$(occ user:setting --default-value "" "${user_id}" "directory2album" "album_indexed_datetimes")
   IFS='|' read -r -a album_list <<<"${setting_value}"
   for data_string in "${album_list[@]}"; do
     local data_values
@@ -97,7 +84,7 @@ set_album_last_indexed_datetime() {
   done
   # remove leading |
   setting_value="${setting_value:1}"
-  occ user:setting "${user_id}" directory2album "album_indexed_datetimes" "${setting_value}"
+  occ user:setting "${user_id}" "directory2album" "album_indexed_datetimes" "${setting_value}"
 }
 
 # Very simple user info extraction, not solid
@@ -109,7 +96,7 @@ get_user_info() {
 }
 
 # Find files in $directory and add them to $album_name
-# Important: do not echo something when no file was found! This is used to know if something was changed.
+# Important: do not echo something when no file was found! This is used to know if something was changed or not.
 find_and_add_files() {
   local first_file=1
   find "${directory}" -type f -not -path '*/.*' \( -newerct "@${last_indexed_datetime}" -or -newermt "@${last_indexed_datetime}" \) \( -iname "*.jpg" -or -iname "*.jpeg" -or -iname "*.png" -or -iname "*.tif" -or -iname "*.bmp" -or -iname "*.gif" -or -iname "*.mp4" -or -iname "*.mpg" -or -iname "*.mpeg" -or -iname "*.avi" -or -iname "*.mkv" \) -print0 |
@@ -126,8 +113,8 @@ find_and_add_files() {
       fi
 
       relative_file_path=$(realpath --relative-to "${user_dir}/files" "${file}")
-      echo "Add file to ${album_name}: ${relative_file_path}"
-      occ photos:albums:add --no-interaction --no-warnings "${user_id}" "${album_name}" "${file}"
+      # echo "Add file to ${album_name}: ${relative_file_path}"
+      occ photos:albums:add --no-interaction --no-warnings "${user_id}" "${album_name}" "${relative_file_path}"
     done
 }
 
