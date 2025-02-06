@@ -28,7 +28,7 @@ Copy this script into apps/directory2album directory in your nextcloud instance 
 
 ## Usage
 1. Test the script in your test environment first.
-1. Run the script every time you added multimedia files to your directories. May run a cronjob.
+1. Run the script every time you added multimedia files to your directories. Can be executed frequently by a cronjob.
 
 ## Legal
 Autor: Michael Deichen <https://github.com/mide22>
